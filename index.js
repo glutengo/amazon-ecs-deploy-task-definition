@@ -20,12 +20,24 @@ const IGNORED_TASK_DEFINITION_ATTRIBUTES = [
 ];
 
 // Deploy to a service that uses the 'ECS' deployment controller
-async function updateEcsService(ecs, clusterName, service, taskDefArn, waitForService) {
+async function updateEcsService(ecs, clusterName, service, taskDefArn, waitForService, stopOldTasks, forceNewDeployment) {
   core.debug('Updating the service');
+
+  forceNewDeployment = !!(forceNewDeployment && forceNewDeployment.toLowerCase() === 'true');
+  stopOldTasks = !!(stopOldTasks && stopOldTasks.toLowerCase() === 'true');
+
+  if (stopOldTasks) {
+    const tasksArns = (await ecs.listTasks({serviceName: service})).taskArns;
+    for (const taskArn of tasksArns) {
+      await ecs.stopTask({task: taskArn});
+    }
+  }
+
   await ecs.updateService({
     cluster: clusterName,
     service: service,
-    taskDefinition: taskDefArn
+    taskDefinition: taskDefArn,
+    forceNewDeployment: forceNewDeployment
   }).promise();
 
   // Wait for service stability
@@ -181,6 +193,8 @@ async function run() {
     const service = core.getInput('service', { required: false });
     const cluster = core.getInput('cluster', { required: false });
     const waitForService = core.getInput('wait-for-service-stability', { required: false });
+    const forceNewDeployment = core.getInput('force-new-deployment', { required: false});
+    const stopOldTasks = core.getInput('stop-old-tasks', { required: false});
 
     // Register the task definition
     core.debug('Registering the task definition');
@@ -218,7 +232,7 @@ async function run() {
         await updateEcsService(ecs, clusterName, service, taskDefArn, waitForService);
       } else if (serviceResponse.deploymentController.type == 'CODE_DEPLOY') {
         // Service uses CodeDeploy, so we should start a CodeDeploy deployment
-        await createCodeDeployDeployment(codedeploy, clusterName, service, taskDefArn, waitForService);
+        await createCodeDeployDeployment(codedeploy, clusterName, service, taskDefArn, waitForService, stopOldTasks, forceNewDeployment);
       } else {
         throw new Error(`Unsupported deployment controller: ${serviceResponse.deploymentController.type}`);
       }

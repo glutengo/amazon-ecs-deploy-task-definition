@@ -150,6 +150,7 @@ describe('Deploy to ECS', () => {
         });
         expect(mockEcsUpdateService).toHaveBeenNthCalledWith(1, {
             cluster: 'cluster-789',
+            forceNewDeployment: false,
             service: 'service-456',
             taskDefinition: 'task:def:arn'
         });
@@ -262,6 +263,8 @@ describe('Deploy to ECS', () => {
             .mockReturnValueOnce('service-456')         // service
             .mockReturnValueOnce('cluster-789')         // cluster
             .mockReturnValueOnce('false')               // wait-for-service-stability
+            .mockReturnValueOnce('force-new-deployment')// wait-for-service-stability
+            .mockReturnValueOnce('stop-old-tasks')      // stop-old-tasks
             .mockReturnValueOnce('/hello/appspec.json') // codedeploy-appspec
             .mockReturnValueOnce('MyApplication')       // codedeploy-application
             .mockReturnValueOnce('MyDeploymentGroup');  // codedeploy-deployment-group
@@ -409,10 +412,11 @@ describe('Deploy to ECS', () => {
         expect(core.setOutput).toHaveBeenNthCalledWith(1, 'task-definition-arn', 'task:def:arn');
         expect(mockEcsDescribeServices).toHaveBeenNthCalledWith(1, {
             cluster: 'cluster-789',
-            services: ['service-456']
+            services: ['service-456'],
         });
         expect(mockEcsUpdateService).toHaveBeenNthCalledWith(1, {
             cluster: 'cluster-789',
+            forceNewDeployment: false,
             service: 'service-456',
             taskDefinition: 'task:def:arn'
         });
@@ -439,6 +443,7 @@ describe('Deploy to ECS', () => {
         });
         expect(mockEcsUpdateService).toHaveBeenNthCalledWith(1, {
             cluster: 'default',
+            forceNewDeployment: false,
             service: 'service-456',
             taskDefinition: 'task:def:arn'
         });

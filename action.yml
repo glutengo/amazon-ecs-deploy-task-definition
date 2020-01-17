@@ -16,6 +16,12 @@ inputs:
   wait-for-service-stability:
     description: 'Whether to wait for the ECS service to reach stable state after deploying the new task definition. Valid value is "true". Will default to not waiting.'
     required: false
+  stop-old-tasks:
+    description: 'Whether to stop any old Tasks related to the ECS Service before performing the update. Valid value is "true". Will default to not stopping.'
+    required: false
+  force-new-deployment:
+    description: 'Whether  to for a new deployment of the ECS Service. Valid value is "true". Will default to no forced deployment.'
+    required: false
   codedeploy-appspec:
     description: "The path to the AWS CodeDeploy AppSpec file, if the ECS service uses the CODE_DEPLOY deployment controller. Will default to 'appspec.yaml'."
     required: false
